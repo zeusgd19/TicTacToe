@@ -23,7 +23,7 @@ io.on('connection', (socket) => {
                 currentTurn: 0,
                 gameOver: false
             };
-            socket.emit('givePlayer','X')
+            socket.emit('givePlayer', 'X');
             socket.join(roomId);
             socket.emit('roomCreated', roomId);
         } else {
@@ -34,7 +34,7 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', (roomId) => {
         if (rooms[roomId] && rooms[roomId].players.length < 2) {
             rooms[roomId].players.push(socket.id);
-            socket.emit('givePlayer','O');
+            socket.emit('givePlayer', 'O');
             socket.join(roomId);
             socket.emit('roomJoined', roomId);
             io.to(roomId).emit('startGame');
@@ -47,29 +47,24 @@ io.on('connection', (socket) => {
         const room = rooms[roomId];
         if (room && !room.gameOver && room.board[index] === '') {
             room.board[index] = room.currentTurn === 0 ? 'X' : 'O';
-            if(room.currentTurn === 0){
-                room.currentTurn = 1
-            } else {
-                room.currentTurn = 0
-            }
+            room.currentTurn = room.currentTurn === 0 ? 1 : 0;
             io.to(roomId).emit('moveMade', room.board, room.currentTurn);
             const winner = checkWinner(room.board);
 
             if (winner) {
                 room.gameOver = true;
                 io.to(roomId).emit('gameOver', winner);
-                rooms.splice(rooms.indexOf(roomId),1)
+                delete rooms[roomId];
             } else if (room.board.every(cell => cell !== '')) {
                 room.gameOver = true;
                 io.to(roomId).emit('gameOver', 'Draw');
-                rooms.splice(rooms.indexOf(roomId),1)
+                delete rooms[roomId];
             }
         }
     });
 
     socket.on('disconnect', () => {
         console.log('Client disconnected');
-        // Handle cleanup if necessary
     });
 });
 
